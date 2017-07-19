@@ -11,7 +11,7 @@ library(RWekajars)
 library(shinydashboard)
 library(RPostgreSQL)
 
-credentials<-read.csv("/home/iliastsergoulas/Dropbox/Website/dbcredentials.csv")
+credentials<-read.csv("/home/iliastsergoulas/dbcredentials.csv")
 drv <- dbDriver("PostgreSQL") # loads the PostgreSQL driver
 con <- dbConnect(drv, dbname = as.character(credentials$database), # creates a connection to the postgres database
                  host = '88.99.13.199', port = as.character(credentials$port), 
