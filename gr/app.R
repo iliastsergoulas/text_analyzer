@@ -1,3 +1,8 @@
+# This R script is created as a Shiny application to analyze texts such as speeches, press releases, interviews etc
+# regarding the agricultural sector.
+# The code is available under MIT license, as stipulated in https://github.com/iliastsergoulas/text_analyzer/blob/master/LICENSE.
+# Author: Ilias Tsergoulas, Website: www.agristats.eu
+
 library(shiny)
 library(shinythemes)
 library(wordcloud)
@@ -11,32 +16,32 @@ library(RWekajars)
 library(shinydashboard)
 library(RPostgreSQL)
 
-credentials<-read.csv("/home/iliastsergoulas/dbcredentials.csv")
-drv <- dbDriver("PostgreSQL") # loads the PostgreSQL driver
-con <- dbConnect(drv, dbname = as.character(credentials$database), # creates a connection to the postgres database
+credentials<-read.csv("/home/iliastsergoulas/dbcredentials.csv") # Reading credentials from csv file
+drv <- dbDriver("PostgreSQL") # Loading the PostgreSQL driver
+con <- dbConnect(drv, dbname = as.character(credentials$database), # Creating a connection to the postgres database
                  host = '88.99.13.199', port = as.character(credentials$port), 
                  user = as.character(credentials$user), password = as.character(credentials$password))
 mydata <- dbGetQuery(con, "SELECT * from agriculture.agritexts") # Get data
 dbDisconnect(con)
 dbUnloadDriver(drv)
-mydata$date <- mdy(mydata$date)
+mydata$date <- mdy(mydata$date) # Converting to date
 
 ui <- fluidPage( # Creating shiny app's UI
     theme = shinytheme("spacelab"),
-    selectInput('person', 'Person/Organization', choices = c(unique(mydata$person),"Total"), selected="Total", multiple=FALSE),
-    dateRangeInput("mydate", "Date:",min=as.character(min(mydata$date)), max=as.character(max(mydata$date)), 
+    selectInput('person', 'Πρόσωπο/Οργανισμός', choices = c(unique(mydata$person_gr),"Σύνολο"), selected="Σύνολο", multiple=FALSE),
+    dateRangeInput("mydate", "Ημερομηνία:",min=as.character(min(mydata$date)), max=as.character(max(mydata$date)), 
                 start=as.character(min(mydata$date)),end=as.character(max(mydata$date)), sep=""),
     mainPanel(plotOutput("view"))
 )
 
 server <- function(input, output) {
     mytext <- reactive({ # Adding reactive data information
-        if (input$person!='Total') {
-            mydata<-mydata[which(mydata$person==input$person),]}
+        if (input$person!='Σύνολο') {
+            mydata<-mydata[which(mydata$person_gr==input$person),]}
         mydata<-mydata[which(mydata$date>=input$mydate[1] & mydata$date<=input$mydate[2]),]
         mydata.text<-paste(unlist(mydata$text), collapse =" ")
         myCorpus <- Corpus(VectorSource(mydata.text)) # Building a corpus
-        # Creating matrix od tweets after "cleaning" them from anything unnecessary
+        # Creating matrix of texts after "cleaning" them from anything unnecessary
         myDtm <- TermDocumentMatrix(myCorpus, control = list(removePunctuation = TRUE, 
              stopwords = c("agronewsgr","για","και","από","των", "οι", "...","ώστε","μέσα", "αυτά","περίπου",
                "την","στις","της","του","τον","τους", "τα","να", "τέλος","στιγμή", "ούτε", "μία", "ακόμη","παράδειγμα",
