@@ -24,7 +24,7 @@ con <- dbConnect(drv, dbname = as.character(credentials$database), # Creating a 
 mydata <- dbGetQuery(con, "SELECT * from agriculture.agritexts") # Get data
 dbDisconnect(con)
 dbUnloadDriver(drv)
-mydata$date <- mdy(mydata$date) # Converting to date
+mydata$date <- dmy(mydata$date) # Converting to date
 
 ui <- fluidPage( # Creating shiny app's UI
     theme = shinytheme("spacelab"),
