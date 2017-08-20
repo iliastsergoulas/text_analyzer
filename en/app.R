@@ -71,7 +71,7 @@ mystopwords<-c("agronewsgr","για","και","από","των", "οι", "...","
 ui <- fluidPage( # Creating shiny app's UI
     theme = shinytheme("spacelab"),
     sidebarPanel(
-        selectInput('person', 'Person/Organization', choices = c(unique(mydata$person_gr),"Total"), 
+        selectInput('person', 'Person/Organization', choices = c(unique(mydata$person_en),"Total"), 
                     selected="Total", multiple=FALSE),
         dateRangeInput("mydate", "Date:",min=as.character(min(mydata$date)), max=as.character(max(mydata$date)), 
                        start=as.character(min(mydata$date)),end=as.character(max(mydata$date)), sep="")
@@ -86,7 +86,7 @@ ui <- fluidPage( # Creating shiny app's UI
 server <- function(input, output) {
     mytext <- reactive({ # Adding reactive data information
         if (input$person!='Total') {
-            mydata<-mydata[which(mydata$person_gr==input$person),]}
+            mydata<-mydata[which(mydata$person_en==input$person),]}
         mydata<-mydata[which(mydata$date>=input$mydate[1] & mydata$date<=input$mydate[2]),]
         mydata.text<-paste(unlist(mydata$text), collapse =" ")
         myCorpus <- Corpus(VectorSource(mydata.text)) # Building a corpus
@@ -101,7 +101,7 @@ server <- function(input, output) {
     })
     output$hclust <- renderPlot({
         if (input$person!='Total') {
-            mydata<-mydata[which(mydata$person_gr==input$person),]}
+            mydata<-mydata[which(mydata$person_en==input$person),]}
         mydata<-mydata[which(mydata$date>=input$mydate[1] & mydata$date<=input$mydate[2]),]
         mydata.text<-paste(unlist(mydata$text), collapse =" ")
         myCorpus <- Corpus(VectorSource(mydata.text)) # Building a corpus
@@ -118,7 +118,7 @@ server <- function(input, output) {
     })
     corrplot <- reactive({
         if (input$person1!='Total') {
-            mydata<-mydata[which(mydata$person_gr==input$person1),]}
+            mydata<-mydata[which(mydata$person_en==input$person1),]}
         mydata<-mydata[which(mydata$date>=input$mydate1[1] & mydata$date<=input$mydate1[2]),]
         corpus <- TextReuseCorpus(text=mydata, tokenizer = tokenize_ngrams, n = 5,
                                   progress = FALSE)

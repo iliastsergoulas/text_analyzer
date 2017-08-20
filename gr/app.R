@@ -77,9 +77,8 @@ ui <- fluidPage( # Creating shiny app's UI
     ),
     mainPanel(
         tabsetPanel(
-            tabPanel("Plot", plotOutput("view")),
-            tabPanel("Dendrogram", plotOutput("hclust")),
-            tabPanel("Correlation plot", plotOutput("corrplot"))
+            tabPanel("Wordcloud", plotOutput("view")),
+            tabPanel("Δενδρόγραμμα", plotOutput("hclust"))
     ))
 )
 
