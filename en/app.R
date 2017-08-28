@@ -17,15 +17,27 @@ library(shinydashboard)
 library(RPostgreSQL)
 library(dendextend)
 
+get_data_from_db<-function(x){ # Retrieving data from database 
+    drv <- dbDriver("PostgreSQL") # Loading the PostgreSQL driver
+    con <- dbConnect(drv, dbname = as.character(credentials$database), # Creating a connection to the postgres database
+                     host = '88.99.13.199', port = as.character(credentials$port), 
+                     user = as.character(credentials$user), password = as.character(credentials$password))
+    query<-paste0("SELECT * from agriculture.agritexts WHERE person_en='",x,"'")
+    mydata <- dbGetQuery(con, query) # Get data
+    dbDisconnect(con)
+    dbUnloadDriver(drv)
+    mydata$date <- dmy(mydata$date) # Converting to date
+    return(mydata)}
+
 credentials<-read.csv("/home/iliastsergoulas/dbcredentials.csv") # Reading credentials from csv file
-drv <- dbDriver("PostgreSQL") # loads the PostgreSQL driver
+drv <- dbDriver("PostgreSQL") # Loading the PostgreSQL driver
 con <- dbConnect(drv, dbname = as.character(credentials$database), # Creating a connection to the postgres database
                  host = '88.99.13.199', port = as.character(credentials$port), 
                  user = as.character(credentials$user), password = as.character(credentials$password))
-mydata <- dbGetQuery(con, "SELECT * from agriculture.agritexts") # Get data
+mylist <- dbGetQuery(con, "SELECT person_en FROM agriculture.agritexts") # Get data
 dbDisconnect(con)
 dbUnloadDriver(drv)
-mydata$date <- dmy(mydata$date) # Converting to date
+
 mystopwords<-c("agronewsgr","για","και","από","των", "οι", "...","ώστε","μέσα", "αυτά","περίπου",
                "την","στις","της","του","τον","τους", "τα","να", "τέλος","στιγμή", "ούτε", "μία", "ακόμη","παράδειγμα",
                "τις","στους","αύριο","στην","προς", "θα", "ως", "ευρώ","κάτι", "είπε","ενώ","πως","έχω","λένε","κάποια",
@@ -51,42 +63,43 @@ mystopwords<-c("agronewsgr","για","και","από","των", "οι", "...","
                "ιδιαίτερα","πούμε","πολλές","μη","πει","μαζί","επειδή","έγινε","γι'","αυτούς","πολλά","πάρα", "αυτούς",
                "θέλουμε","κάναμε","θυμίζω","φορά","βοηθήσουμε","είχαν","προκειμένου","πάνε","έχετε","τέτοια","λίγο","είχαν",
                "προσπαθούμε","είχε","δημοσιογράφοσ","υπουργόσ","σειρά","αυτού","πάμε","πασεγεσ","όσα","σχεδόν","όλων",
-               "εκ","κύριος","ενώ","άλλωστε",
+               "εκ","κύριος","ενώ","άλλωστε","υπουργείο","διαδικασία","δουλειά","δυο","πραγματικά","υποστηρίξουμε",
+               "άρθρο","πλαίσιο","καν","σύμφωνα","παράγραφος","υπόψη","στοιχείο","εν","αριθ","αναφέρονται","αφορούν","€",
+               "σχετικές","βάσει","κανονισμού","εε","σημείο","παα","μέτρου","μέτρων","",
+               "βλέπε","σύνολο","πίνακας","άρθρου","όσον","|","εντός",             
                "agronewsgr", "https", "amp", "food", "read", "https","without","bring","usda", "agency","gov","navigation",
                "thanks", "look", "looking", "see", "people", "way","fms","hemp","due","information","press","release","releases",
                "gaid", "agchattruth", "foodtruth","agchat","want","list","make","range","site","commission","europa","european",
                "agriculture","will", "talk", "now", "new", "forget","like","using","ghg","member","policy","search","also",
                "farm", "thank", "book", "year", "week", "photo","today","farmers","states","tools","div","gpt","count",
-               "add", "can", "truths", "life", "news", "every","lelyknowhow","farming","fao","said","wfp",
-               "time", "action", "know", "share", "just", "found","always","day","farms","graziano","silva",
-               "latest", "find", "get", "great", "table", "join", "word", "countries","across","director",
-               "thunderclap", "excited", "better", "voice", "video","use","asa","ahdb",
-               "paper", "getting", "blogs", "help", "one","unfao","via","...","_",
-               "best", "animal", "need", "joy", "many", "awesome", "support", "first",
-               "futureofcap","sacfarmclimate","offers","shows","play","-","means","hort",
-               "allow","provides","nfutweets","never","century","address","say","since",
+               "add", "can", "truths", "life", "news", "every","lelyknowhow","farming","fao","said","wfp","office","america",
+               "time", "action", "know", "share", "just", "found","always","day","farms","graziano","silva","communities",
+               "latest", "find", "get", "great", "table", "join", "word", "countries","across","director","program",
+               "thunderclap", "excited", "better", "voice", "video","use","asa","ahdb","vilsack","secretary","programs",               "paper", "getting", "blogs", "help", "one","unfao","via","...","_",
+               "best", "animal", "need", "joy", "many", "awesome", "support", "first","million","national","service",
+               "futureofcap","sacfarmclimate","offers","shows","play","-","means","hort","percent","|","l","state",
+               "allow","provides","nfutweets","never","century","address","say","since","conservation","opportunity",
+               "assistance","general","world",
                "almost","philhoganeu","farmwildlifeuk","min","nyc","around","devex","xhnews","review")
-
 
 ui <- fluidPage( # Creating shiny app's UI
     theme = shinytheme("spacelab"),
     sidebarPanel(
-        selectInput('person', 'Person/Organization', choices = c(unique(mydata$person_en),"Total"), 
-                    selected="Total", multiple=FALSE),
-        dateRangeInput("mydate", "Date:",min=as.character(min(mydata$date)), max=as.character(max(mydata$date)), 
-                       start=as.character(min(mydata$date)),end=as.character(max(mydata$date)), sep="")
+        selectInput('person', 'Person/Organization', choices = unique(mylist$person_en), 
+                    selected='Vaggelis Apostolou - Minister of Agriculture', multiple=FALSE),
+        dateRangeInput("mydate", "Date:",min='01/01/2000', max=Sys.Date(), 
+                       start='01/01/2000',end=Sys.Date(), sep="")
     ),
     mainPanel(
         tabsetPanel(
-            tabPanel("Plot", plotOutput("view")),
+            tabPanel("Wordcloud", plotOutput("view")),
             tabPanel("Dendrogram", plotOutput("hclust"))
         ))
 )
 
 server <- function(input, output) {
     mytext <- reactive({ # Adding reactive data information
-        if (input$person!='Total') {
-            mydata<-mydata[which(mydata$person_en==input$person),]}
+        mydata<-get_data_from_db(input$person)
         mydata<-mydata[which(mydata$date>=input$mydate[1] & mydata$date<=input$mydate[2]),]
         mydata.text<-paste(unlist(mydata$text), collapse =" ")
         myCorpus <- Corpus(VectorSource(mydata.text)) # Building a corpus
@@ -100,8 +113,7 @@ server <- function(input, output) {
         mytext <- data.frame(word=myNames, freq=v) # Creating dataframe with each word and its frequency
     })
     output$hclust <- renderPlot({
-        if (input$person!='Total') {
-            mydata<-mydata[which(mydata$person_en==input$person),]}
+        mydata<-get_data_from_db(input$person)
         mydata<-mydata[which(mydata$date>=input$mydate[1] & mydata$date<=input$mydate[2]),]
         mydata.text<-paste(unlist(mydata$text), collapse =" ")
         myCorpus <- Corpus(VectorSource(mydata.text)) # Building a corpus
@@ -117,8 +129,8 @@ server <- function(input, output) {
         plot(d2)
     })
     corrplot <- reactive({
-        if (input$person1!='Total') {
-            mydata<-mydata[which(mydata$person_en==input$person1),]}
+        print(input$person)
+        mydata<-get_data_from_db(as.character(input$person))
         mydata<-mydata[which(mydata$date>=input$mydate1[1] & mydata$date<=input$mydate1[2]),]
         corpus <- TextReuseCorpus(text=mydata, tokenizer = tokenize_ngrams, n = 5,
                                   progress = FALSE)
