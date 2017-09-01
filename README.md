@@ -9,3 +9,5 @@ The application is pretty simple:
 2. The user may filter the to-be-analyzed text, according to the person/organization and the selected date interval.
 3. Then, ingoring all the stopwords (like prepositions and adverbs), the frequency of each word is measured and a word cloud is created based on these frequencies.
 4. There is an extra functionality of creating a dendrogram with the most common words within the text.
+
+The code is available under MIT license, as stipulated in https://github.com/iliastsergoulas/agri_subsidies/blob/master/LICENSE.
